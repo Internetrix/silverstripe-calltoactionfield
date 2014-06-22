@@ -1,5 +1,5 @@
 <?php
-class CTA_SiteTreeExtension extends DataExtension {
+class CTA_DataObjectExtension extends DataExtension {
 	
 	static $setting;
 

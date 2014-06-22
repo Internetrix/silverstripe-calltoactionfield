@@ -1,5 +1,5 @@
 <?php
-class GlobalData extends DataObject {
+class CTAConfig extends DataObject {
 	
 	private static $db = array (
 		'SourceClass' 	=> 'Varchar(255)',
