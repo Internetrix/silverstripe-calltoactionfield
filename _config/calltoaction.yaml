@@ -1,0 +1,9 @@
+---
+name: CallToActionField
+---
+SiteConfig:
+  extensions:
+    - CTA_SiteConfigExtension
+SiteTree:
+  extensions:
+    - CTA_SiteTreeExtension

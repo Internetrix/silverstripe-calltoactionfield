@@ -1,4 +1,4 @@
-silverstripe-calltoactionfield
+Silverstripe Call To Action Field
 ==============================
 
-configurable call to action field for data values or relationships.
+silverstripe 3.1
