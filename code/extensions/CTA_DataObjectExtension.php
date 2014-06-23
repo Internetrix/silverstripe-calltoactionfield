@@ -24,6 +24,13 @@ class CTA_DataObjectExtension extends DataExtension {
 															// false = always create new value in 'CTAVGlobalSetings'
 				)											
 			)
+			, 'Page' => array(
+				array(
+					'SourceValue' => 'ctatesting'		
+					, 'GlobalSource' => 'SiteConfig'		
+					, 'UseOriginal' => true			
+				)
+			)
 		);
 	
 		self::$config = $config;
@@ -33,39 +40,61 @@ class CTA_DataObjectExtension extends DataExtension {
 				//make sure $ClassName is instance of DataObject
 				if(is_subclass_of($ClassName, 'DataObject')){
 					//add CTA config into SS Config
-					$cta_config = Config::inst()->get($ClassName, 'cta_config');
+					$cta_config_array = Config::inst()->get($ClassName, 'cta_config');
 					
-					if($cta_config === null){
+					if($cta_config_array === null){
 						//update 'cta_config' for this class
-						Config::inst()->update($ClassName, 'cta_config', $ConfigArray);
+						$cta_config_array = $ConfigArray;
+						Config::inst()->update($ClassName, 'cta_config', $cta_config_array);
 					}
 					
-					self::ApplyCallToActionExtensions($ClassName, $ConfigArray);
+					self::ApplyCallToActionExtensions($ClassName, $cta_config_array);
 				}
 			}
 		}
 		
 	}
 	
-	static function ApplyCallToActionExtensions($ClassName, $ConfigArray){
+	static function ApplyCallToActionExtensions($ClassName, $config_array){
 		
+		foreach ($config_array as $array){
+			//apply CTA_DataObjectExtension.php
+			if( ! $ClassName::has_extension('CTA_DataObjectExtension') ){
+				Object::add_extension($ClassName, 'CTA_DataObjectExtension');
+			}
+			
+			//apply CTA_GlobalDataObjectExtension.php
+			if( isset($config_array['GlobalSource']) ){
+				
+				$NameOfGlobalDataObject = $config_array['GlobalSource'];
+				
+				if( ! $NameOfGlobalDataObject::has_extension('CTA_GlobalDataObjectExtension') ){
+					Object::add_extension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
+				}
+			}
+		}		
+		
+	}
+	
+	static function CheckSourceValue($ClassName, $value_name){
 		
 		
 		
 	}
-	
 	
 	
 	public function updateCMSFields(FieldList $fields){
+
 		$fields->removeByName('CTAVSetings');
 		
+		$cta_config = $this->owner->stat('cta_config');
 		
-		
-		
+		Debug::show(Config::inst()->get('Page', 'extensions'));
+		Debug::show($this->owner->CTAVSetings);
+		die;
 		
 		
 	}
-	
 	
 }	
 	
