@@ -1,9 +1,10 @@
 <?php
 class CTA_DataObjectExtension extends DataExtension {
 	
-	private static $db = array (
-		'CTAVSetings' 	=> 'Text'	//Call To Action Values Settings
-	);
+	/**
+	 * @var DataObject
+	 */
+	protected $owner;
 	
 	/**
 	 * @var array
@@ -24,13 +25,13 @@ class CTA_DataObjectExtension extends DataExtension {
 															// false = always create new value in 'CTAVGlobalSetings'
 				)											
 			)
-			, 'Page' => array(
-				array(
-					'SourceValue' => 'ctatesting'		
-					, 'GlobalSource' => 'SiteConfig'		
-					, 'UseOriginal' => true			
-				)
-			)
+// 			, 'Page' => array(
+// 				array(
+// 					'SourceValue' => 'ctatesting'		
+// 					, 'GlobalSource' => 'SiteConfig'		
+// 					, 'UseOriginal' => true			
+// 				)
+// 			)
 		);
 	
 		self::$config = $config;
@@ -83,18 +84,123 @@ class CTA_DataObjectExtension extends DataExtension {
 	}
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	public function updateCMSFields(FieldList $fields){
-
-		$fields->removeByName('CTAVSetings');
 		
-		$cta_config = $this->owner->stat('cta_config');
-		
-		Debug::show(Config::inst()->get('Page', 'extensions'));
-		Debug::show($this->owner->CTAVSetings);
-		die;
-		
+		//check the static config and see if it need call to action fields
+		if($this->owner->requireCTAConfig()){
+				
+			
+			
+			
+			
+			
+		}
 		
 	}
+	
+	
+	public function onBeforeWrite(){
+		
+		if( ! $this->owner->ID && $this->owner->requireCTAConfig()){
+			$this->owner->CTAFirstWrite = true;
+		}
+		
+	}
+	
+	public function onAfterWrite(){
+		
+		if($this->owner->CTAFirstWrite === true){
+			
+			$this->owner->GetOrCreateCTAConfig();
+			
+			$this->owner->CTAFirstWrite = false;
+		}
+		
+	}
+	
+	/**
+	 * @return Boolean
+	 */
+	public function requireCTAConfig(){
+		$staticConfig = $this->owner->getStaticConfig();
+		
+		if($staticConfig !== null){
+			foreach ($staticConfig as $array){
+				if(isset($array['SourceValue']) && $array['SourceValue']){
+					//return true if it's $db value of the owner DataObject
+					$dbMapArray = DataObject::database_fields($this->owner->ClassName);
+// 					Debug::show($dbMapArray);die;
+					$dbValueName = $array['SourceValue'];
+					if(isset($dbMapArray[$dbValueName])){
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @return array | null
+	 */
+	public function getStaticConfig(){
+		
+		return $this->owner->stat('cta_config');
+		
+	}
+	
+	
+	public function getCTAConfig(){
+		return CTAConfig::get()
+					->filter(
+						array(
+							'SourceClass' => $this->owner->ClassName
+							, 'SourceID' => $this->owner->ID
+						)
+					)
+					->first();		
+	}
+	
+	
+	public function CreateCTAConfig(){
+		if($this->owner->ID){
+			$config = new CTAConfig();
+			$config->SourceClass	= $this->owner->ClassName;
+			$config->SourceID		= $this->owner->ID;
+			$config->Setting		= '';
+			$config->write();
+			
+			return $config;
+		}
+		
+		return false;
+	}
+	
+	
+	public function GetOrCreateCTAConfig(){
+		
+		$configDO = $this->owner->getCTAConfig();
+		
+		if( ! $configDO){
+			return $this->owner->CreateCTAConfig();
+		}
+		
+		return $configDO;
+	}
+	
+	
+	
+	
 	
 }	
 	
