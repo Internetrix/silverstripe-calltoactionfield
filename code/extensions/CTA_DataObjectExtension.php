@@ -61,7 +61,8 @@ class CTA_DataObjectExtension extends DataExtension {
 		foreach ($config_array as $array){
 			//apply CTA_DataObjectExtension.php
 			if( ! $ClassName::has_extension('CTA_DataObjectExtension') ){
-				Object::add_extension($ClassName, 'CTA_DataObjectExtension');
+				
+				self::AddDataObjectExtension($ClassName, 'CTA_DataObjectExtension');
 			}
 			
 			//apply CTA_GlobalDataObjectExtension.php
@@ -70,7 +71,7 @@ class CTA_DataObjectExtension extends DataExtension {
 				$NameOfGlobalDataObject = $config_array['GlobalSource'];
 				
 				if( ! $NameOfGlobalDataObject::has_extension('CTA_GlobalDataObjectExtension') ){
-					Object::add_extension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
+					self::AddDataObjectExtension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
 				}
 			}
 		}		
@@ -84,7 +85,13 @@ class CTA_DataObjectExtension extends DataExtension {
 	}
 	
 	
-	
+	static function AddDataObjectExtension($ClassName, $extensionName){
+		//add to static config
+		$StaticExtsData = Config::inst()->get($ClassName, 'extensions');
+		$StaticExtsData[] = $extensionName;
+		Config::inst()->update($ClassName, 'extensions', null);
+		Config::inst()->update($ClassName, 'extensions', $StaticExtsData);
+	}
 	
 	
 	
