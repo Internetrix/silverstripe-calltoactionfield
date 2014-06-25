@@ -2,7 +2,7 @@
 class CTA_DataObjectExtension extends DataExtension {
 	
 	/**
-	 * @var DataObject
+	 * @var CTA_DataObjectExtension
 	 */
 	protected $owner;
 	
@@ -19,6 +19,7 @@ class CTA_DataObjectExtension extends DataExtension {
 				array(
 					'SourceValue' => 'PackingContent'		// db value of dataobject
 					, 'GlobalSource' => 'SiteConfig'		// define where to store or get global value or dataobject
+					, 'DefaultSourceOption' => 'Global'		// if this is not set, 'Global' by default
 					, 'UseOriginal' => false				// true  = if 'SourceValue' exists in 'GlobalSource' dataobject, 
 															//         then use it as global source value. Otherwise, create a 
 															//		   new value in 'CTAVGlobalSetings'
@@ -103,20 +104,60 @@ class CTA_DataObjectExtension extends DataExtension {
 	public function updateCMSFields(FieldList $fields){
 		
 		//check the static config and see if it need call to action fields
-		if($this->owner->requireCTAConfig()){
+		if($this->owner->ID && $this->owner->requireCTAConfig()){
 				
+			$StaticConfigArrays = $this->owner->getStaticConfig();
 			
+			$ConfigDataDO = $this->owner->GetOrCreateCTAConfig();
 			
-			
-			
-			
+			//check all the defined values
+			foreach ($StaticConfigArrays as $StaticConfig){
+				
+				$valueName = $StaticConfig['SourceValue'];
+				
+				$SelectedField = $fields->dataFieldByName($valueName);
+
+				if(is_object($SelectedField) && $SelectedField->Name == $valueName){
+					//insert value source options field
+					$SourceOptionField = $this->owner->PopulateSourceOptionField($fields, $SelectedField, $StaticConfig, $ConfigDataDO);
+					
+					//TODO setup readonly field for viewing global values.
+					
+					//setup display logic
+					$SelectedField->displayIf($SourceOptionField->Name)->isEqualTo("Custom")->end();
+				}
+			}
 		}
 		
 	}
 	
 	
-	public function onBeforeWrite(){
+	public function PopulateSourceOptionField(FieldList $fields, FormField $SelectedField, $StaticConfig, CTAConfig $ConfigDataDO){
+		$optionsArray 	= array(
+			'Custom' => 'Custom'
+			, 'Global' => 'Global'
+			, 'Parent' => 'Parent'	
+			, 'Hide' => 'Hide'
+		);
 		
+		if( ! $this->owner->hasExtension('Hierarchy') || $this->owner->ParentID === 0){
+			unset($optionsArray['Parent']);
+		}
+		
+		$sourceFieldName = $SelectedField->Name;
+		
+		$selectedValue 	= $this->owner->getOptionValueFromConfigData($sourceFieldName, $StaticConfig, $ConfigDataDO);
+		
+		$optionsField = OptionsetField::create("CTASourceOption[{$sourceFieldName}]", "'{$SelectedField->Title()}' Source", $optionsArray, $selectedValue);
+		
+		$fields->insertBefore($optionsField, $sourceFieldName);
+		
+		return $optionsField;
+	}
+	
+	
+	public function onBeforeWrite(){
+
 		if( ! $this->owner->ID && $this->owner->requireCTAConfig()){
 			$this->owner->CTAFirstWrite = true;
 		}
@@ -168,14 +209,16 @@ class CTA_DataObjectExtension extends DataExtension {
 	
 	
 	public function getCTAConfig(){
-		return CTAConfig::get()
-					->filter(
-						array(
-							'SourceClass' => $this->owner->ClassName
-							, 'SourceID' => $this->owner->ID
-						)
-					)
-					->first();		
+		$CTAConfigDO =  CTAConfig::get()
+			->filter(
+				array(
+					'SourceClass' => $this->owner->ClassName
+					, 'SourceID' => $this->owner->ID
+				)
+			)
+			->first();		
+		
+		return $CTAConfigDO;
 	}
 	
 	
@@ -206,8 +249,24 @@ class CTA_DataObjectExtension extends DataExtension {
 	}
 	
 	
-	
-	
+	public function getOptionValueFromConfigData($SourceValue, $StaticConfig = null, $CTAConfigDO = null){
+		if($CTAConfigDO === null){
+			$CTAConfigDO = $this->owner->getCTAConfig();
+		}
+		
+		if($StaticConfig === null){
+			$StaticConfig = $this->owner->getStaticConfig();
+		}		
+		
+		$OptionValue = 'Global';
+		
+		//if 'DefaultSourceOption' is set, then use it.
+		if(isset($StaticConfig['DefaultSourceOption']) && $StaticConfig['DefaultSourceOption']){
+			$OptionValue = $StaticConfig['DefaultSourceOption'];
+		}
+		
+		return $OptionValue;
+	}
 	
 }	
 	

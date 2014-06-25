@@ -8,7 +8,28 @@ class CTAConfig extends DataObject {
 		'Setting' 		=> 'Text'			//serialized values
 	);
 	
+	/**
+	 * @var array
+	 */
+	protected $SettingDataArray;	//store unserialized 'Setting' value
 	
+	public function __construct(){
+		
+		parent::__construct();
+		
+		if($this->Setting){
+			$this->SettingDataArray = unserialize($this->Setting);
+		}else{
+			$this->SettingDataArray = array();
+		}
+	}
+	
+	public function onBeforeWrite() {
+		parent::onBeforeWrite();
+		
+		$this->Setting = serialize($this->SettingDataArray);
+	}
+
 	public function getSourceDataObject(){
 		$ClassName = $this->SourceClass;
 
@@ -16,9 +37,8 @@ class CTAConfig extends DataObject {
 	}
 	
 	
-	
-	
-	
-	
+	public function getSettingDataArrayArray(){
+		return $this->SettingDataArray;
+	}
 	
 }
