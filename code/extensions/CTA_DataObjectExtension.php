@@ -146,7 +146,7 @@ class CTA_DataObjectExtension extends DataExtension {
 		
 		$sourceFieldName = $SelectedField->Name;
 		
-		$selectedValue 	= $this->owner->getOptionValueFromConfigData($sourceFieldName, $StaticConfig, $ConfigDataDO);
+		$selectedValue 	= $this->owner->getCTAOptionValue($sourceFieldName, $ConfigDataDO);
 		
 		$optionsField = OptionsetField::create("CTASourceOption[{$sourceFieldName}]", "'{$SelectedField->Title()}' Source", $optionsArray, $selectedValue);
 		
@@ -208,6 +208,9 @@ class CTA_DataObjectExtension extends DataExtension {
 	}
 	
 	
+	/**
+	 * @return CTAConfig
+	 */
 	public function getCTAConfig(){
 		$CTAConfigDO =  CTAConfig::get()
 			->filter(
@@ -218,7 +221,7 @@ class CTA_DataObjectExtension extends DataExtension {
 			)
 			->first();		
 		
-		return $CTAConfigDO;
+		return ($CTAConfigDO && $CTAConfigDO->exists()) ? $CTAConfigDO : false;
 	}
 	
 	
@@ -249,24 +252,45 @@ class CTA_DataObjectExtension extends DataExtension {
 	}
 	
 	
-	public function getOptionValueFromConfigData($SourceValue, $StaticConfig = null, $CTAConfigDO = null){
-		if($CTAConfigDO === null){
+	public function getCTAOptionValue($SourceValue, $CTAConfigDO = false){
+		
+		$StaticConfig = $this->owner->getStaticConfig();
+		
+		if($CTAConfigDO === false){
 			$CTAConfigDO = $this->owner->getCTAConfig();
 		}
 		
-		if($StaticConfig === null){
-			$StaticConfig = $this->owner->getStaticConfig();
-		}		
+		//program default
+		$OptionValue = 'Custom';
+		$gotValue = true;
 		
-		$OptionValue = 'Global';
+		if($CTAConfigDO !== false){
+			//if user set the custom option value, return it.
+			$setting = $CTAConfigDO->getSettingArrayByValue('CTASourceOption');
+			
+			if( isset($setting[$SourceValue])){
+				
+				$OptionValue = $setting[$SourceValue];
+				
+			}else{
+				$getFromDefault = true; 
+			}
+			
+		}
 		
-		//if 'DefaultSourceOption' is set, then use it.
-		if(isset($StaticConfig['DefaultSourceOption']) && $StaticConfig['DefaultSourceOption']){
-			$OptionValue = $StaticConfig['DefaultSourceOption'];
+		if( ! $gotValue){
+			//haven't get user defined option value. 
+			//if 'DefaultSourceOption' is set, then use it.
+			if(isset($StaticConfig['DefaultSourceOption']) && $StaticConfig['DefaultSourceOption']){
+				$OptionValue = $StaticConfig['DefaultSourceOption'];
+			}
 		}
 		
 		return $OptionValue;
 	}
+	
+	
+	
 	
 }	
 	

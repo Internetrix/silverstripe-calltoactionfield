@@ -37,8 +37,19 @@ class CTAConfig extends DataObject {
 	}
 	
 	
-	public function getSettingDataArrayArray(){
+	public function getSettingDataArray(){
 		return $this->SettingDataArray;
+	}
+	
+	
+	public function getSettingArrayByValue($value){
+		$setting = $this->getSettingDataArray();
+		
+		if( isset($setting[$value]) ){
+			return $setting[$value];
+		}
+		
+		return false;
 	}
 	
 }
