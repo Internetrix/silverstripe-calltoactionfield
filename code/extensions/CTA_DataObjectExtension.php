@@ -101,10 +101,16 @@ class CTA_DataObjectExtension extends DataExtension {
 	
 	
 	
+	
+	
+	
+	
+	
+	
 	public function updateCMSFields(FieldList $fields){
 		
 		//check the static config and see if it need call to action fields
-		if($this->owner->ID && $this->owner->requireCTAConfig()){
+		if($this->owner->requireCTAConfig()){
 				
 			$StaticConfigArrays = $this->owner->getStaticConfig();
 			
@@ -158,19 +164,30 @@ class CTA_DataObjectExtension extends DataExtension {
 	
 	public function onBeforeWrite(){
 
-		if( ! $this->owner->ID && $this->owner->requireCTAConfig()){
+		if($this->owner->requireCTAConfig()){
+			//update call to action values in onAfterWrite()
 			$this->owner->CTAFirstWrite = true;
+			$this->owner->CTAupdate = true;
 		}
 		
 	}
 	
 	public function onAfterWrite(){
-		
-		if($this->owner->CTAFirstWrite === true){
+
+		if($this->owner->CTAupdate === true){
+			//get or create record
+			$configDO = $this->owner->GetOrCreateCTAConfig();
 			
-			$this->owner->GetOrCreateCTAConfig();
+			//save settings
 			
-			$this->owner->CTAFirstWrite = false;
+			
+			
+			Debug::show($this->owner->CTASourceOption);die;
+			
+			
+			$configDO->write();
+			
+			$this->owner->CTAupdate = false;
 		}
 		
 	}
