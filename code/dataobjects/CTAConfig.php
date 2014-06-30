@@ -4,14 +4,25 @@ class CTAConfig extends DataObject {
 	private static $db = array (
 		'SourceClass' 	=> 'Varchar(255)',
 		'SourceID' 		=> 'Varchar(255)',
-		'ForGlobal'		=> 'Boolean',	
 		'Setting' 		=> 'Text'			//serialized values
 	);
 	
 	/**
 	 * @var array
 	 */
-	protected $SettingDataArray;	//store unserialized 'Setting' value
+	private $SettingDataArray = array();	//store unserialized 'Setting' value
+	
+	
+	public function getSettingDataArray(){
+	
+		if(empty($this->SettingDataArray)){
+			if($this->Setting){
+				$this->SettingDataArray = unserialize($this->Setting);
+			}
+		}
+	
+		return $this->SettingDataArray;
+	}
 	
 
 	public function onBeforeWrite() {
@@ -20,6 +31,7 @@ class CTAConfig extends DataObject {
 		$this->Setting = serialize($this->SettingDataArray);
 	}
 
+	
 	public function getSourceDataObject(){
 		$ClassName = $this->SourceClass;
 
@@ -27,26 +39,29 @@ class CTAConfig extends DataObject {
 	}
 	
 	
-	public function getSettingDataArray(){
-		
-		if($this->Setting){
-			$this->SettingDataArray = unserialize($this->Setting);
-		}else{
-			$this->SettingDataArray = array();
-		}
-		
-		return $this->SettingDataArray;
-	}
-	
-	
-	public function getSettingArrayByValue($value){
+	public function getSettingArrayByValue($value = null){
 		$setting = $this->getSettingDataArray();
+		
+		if($value === null){
+			return $setting;
+		}
 		
 		if( isset($setting[$value]) ){
 			return $setting[$value];
 		}
 		
 		return false;
+	}
+	
+	
+	public function updateSettingData($OptionValuesArray){
+		if( ! is_array($OptionValuesArray)){
+			return false;
+		}
+		
+		$dataArray = $this->getSettingDataArray();
+		
+		$this->SettingDataArray = array_merge($dataArray, $OptionValuesArray);
 	}
 	
 }

@@ -10,9 +10,19 @@ class CTA_DataObjectExtension extends DataExtension {
 	 * @var array
 	 */
 	static $config;
+	
+	/**
+	 * @var string
+	 */
+	private static $DefaultGlobalSource = 'SiteConfig';
+
+	/**
+	 * @var array
+	 */
+	private static $GlobalStaticConfig = array();
 
 	static function CallToActionFields_Init(){
-	
+		//TODO $config should be pulled from static config 
 		$config = array(
 			// source class (instance of DataObject) => config array
 			'Product' => array(
@@ -51,6 +61,10 @@ class CTA_DataObjectExtension extends DataExtension {
 					}
 					
 					self::ApplyCallToActionExtensions($ClassName, $cta_config_array);
+					
+					//push global setting
+// 					$sourceValue = ['SourceValue'];
+					$GlobalStaticConfig[$ClassName][] = array();
 				}
 			}
 		}
@@ -59,21 +73,26 @@ class CTA_DataObjectExtension extends DataExtension {
 	
 	static function ApplyCallToActionExtensions($ClassName, $config_array){
 		
+		$GlobalStaticConfig = self::$GlobalStaticConfig;
+		
 		foreach ($config_array as $array){
 			//apply CTA_DataObjectExtension.php
 			if( ! $ClassName::has_extension('CTA_DataObjectExtension') ){
-				
 				self::AddDataObjectExtension($ClassName, 'CTA_DataObjectExtension');
 			}
 			
 			//apply CTA_GlobalDataObjectExtension.php
-			if( isset($config_array['GlobalSource']) ){
-				
+			if( isset($config_array['GlobalSource']) && (is_subclass_of($config_array['GlobalSource'], 'DataObject'))){
+				//TODO throw user error if $config_array['GlobalSource'] is not an dataobject.
 				$NameOfGlobalDataObject = $config_array['GlobalSource'];
-				
-				if( ! $NameOfGlobalDataObject::has_extension('CTA_GlobalDataObjectExtension') ){
-					self::AddDataObjectExtension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
-				}
+			}else{
+				$NameOfGlobalDataObject = self::$DefaultGlobalSource;
+			}
+			
+// 			$GlobalStaticConfig[$NameOfGlobalDataObject][] = ;
+			
+			if( ! $NameOfGlobalDataObject::has_extension('CTA_GlobalDataObjectExtension') ){
+				self::AddDataObjectExtension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
 			}
 		}		
 		
@@ -114,7 +133,7 @@ class CTA_DataObjectExtension extends DataExtension {
 				
 			$StaticConfigArrays = $this->owner->getStaticConfig();
 			
-			$ConfigDataDO = $this->owner->GetOrCreateCTAConfig();
+			$ConfigDataDO = $this->owner->getCTAConfig();
 			
 			//check all the defined values
 			foreach ($StaticConfigArrays as $StaticConfig){
@@ -153,8 +172,9 @@ class CTA_DataObjectExtension extends DataExtension {
 		$sourceFieldName = $SelectedField->Name;
 		
 		$selectedValue 	= $this->owner->getCTAOptionValue($sourceFieldName, $ConfigDataDO);
-		
-		$optionsField = OptionsetField::create("CTASourceOption[{$sourceFieldName}]", "'{$SelectedField->Title()}' Source", $optionsArray, $selectedValue);
+
+		$optionsField = OptionsetField::create("CTASourceOption[{$sourceFieldName}]", "'{$SelectedField->Title()}' Source", $optionsArray);
+		$optionsField->setValue($selectedValue);		
 		
 		$fields->insertBefore($optionsField, $sourceFieldName);
 		
@@ -173,18 +193,15 @@ class CTA_DataObjectExtension extends DataExtension {
 	}
 	
 	public function onAfterWrite(){
-
+		
 		if($this->owner->CTAupdate === true){
 			//get or create record
 			$configDO = $this->owner->GetOrCreateCTAConfig();
 			
 			//save settings
+			$CTA_post_data = Controller::curr()->request->postVar('CTASourceOption');
 			
-			
-			
-			Debug::show($this->owner->CTASourceOption);die;
-			
-			
+			$configDO->updateSettingData($CTA_post_data);
 			$configDO->write();
 			
 			$this->owner->CTAupdate = false;
@@ -230,14 +247,14 @@ class CTA_DataObjectExtension extends DataExtension {
 	 */
 	public function getCTAConfig(){
 		$CTAConfigDO =  CTAConfig::get()
-			->filter(
-				array(
-					'SourceClass' => $this->owner->ClassName
-					, 'SourceID' => $this->owner->ID
-				)
-			)
-			->first();		
-		
+							->filter(
+								array(
+									'SourceClass' 	=> $this->owner->ClassName, 
+									'SourceID' 		=> $this->owner->ID
+								)
+							)
+							->first();		
+
 		return ($CTAConfigDO && $CTAConfigDO->exists()) ? $CTAConfigDO : false;
 	}
 	
@@ -261,7 +278,7 @@ class CTA_DataObjectExtension extends DataExtension {
 		
 		$configDO = $this->owner->getCTAConfig();
 		
-		if( ! $configDO){
+		if($configDO === false){
 			return $this->owner->CreateCTAConfig();
 		}
 		
@@ -283,8 +300,8 @@ class CTA_DataObjectExtension extends DataExtension {
 		
 		if($CTAConfigDO !== false){
 			//if user set the custom option value, return it.
-			$setting = $CTAConfigDO->getSettingArrayByValue('CTASourceOption');
-			
+			$setting = $CTAConfigDO->getSettingArrayByValue();
+
 			if( isset($setting[$SourceValue])){
 				
 				$OptionValue = $setting[$SourceValue];
@@ -292,7 +309,6 @@ class CTA_DataObjectExtension extends DataExtension {
 			}else{
 				$getFromDefault = true; 
 			}
-			
 		}
 		
 		if( ! $gotValue){
