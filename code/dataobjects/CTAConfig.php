@@ -13,17 +13,7 @@ class CTAConfig extends DataObject {
 	 */
 	protected $SettingDataArray;	//store unserialized 'Setting' value
 	
-	public function __construct(){
-		
-		parent::__construct();
-		
-		if($this->Setting){
-			$this->SettingDataArray = unserialize($this->Setting);
-		}else{
-			$this->SettingDataArray = array();
-		}
-	}
-	
+
 	public function onBeforeWrite() {
 		parent::onBeforeWrite();
 		
@@ -38,6 +28,13 @@ class CTAConfig extends DataObject {
 	
 	
 	public function getSettingDataArray(){
+		
+		if($this->Setting){
+			$this->SettingDataArray = unserialize($this->Setting);
+		}else{
+			$this->SettingDataArray = array();
+		}
+		
 		return $this->SettingDataArray;
 	}
 	
