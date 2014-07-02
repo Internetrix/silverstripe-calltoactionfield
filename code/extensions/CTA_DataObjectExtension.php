@@ -126,15 +126,15 @@ class CTA_DataObjectExtension extends DataExtension {
 	public function setOwner($owner, $ownerBaseClass = null) {
 		
 		parent::setOwner($owner, $ownerBaseClass);
-
+return;
 		if( $owner && $owner->ID && $owner->ClassName){
 			$ownerBaseClass = $owner->ClassName;
 		}else{
 			return;
 		}
 	
-		$staticConfig = Config::inst()->get($ownerBaseClass, 'cta_config');
-	
+		$staticConfig = Config::inst()->get($ownerBaseClass, 'extra_methods');
+
 		if( ! empty($staticConfig)){
 			
 			$SourceValueArray = array();
@@ -151,11 +151,11 @@ class CTA_DataObjectExtension extends DataExtension {
 
 					$funcName = 'get' . $item;
 	
-					$this->owner->$funcName() = function() use($funcName){
+// 					$this->owner->$funcName = function() use($funcName){
 				
 							
-						return 	Debug::show(111);
-					};
+// 						return 	Debug::show(111);
+// 					};
 				}
 			}	
 				
