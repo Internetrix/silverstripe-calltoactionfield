@@ -4,7 +4,7 @@ class CTA_DataObjectExtension extends DataExtension {
 	/**
 	 * @var CTA_DataObjectExtension
 	 */
-	protected $owner;
+// 	protected $owner;
 	
 	/**
 	 * @var array
@@ -123,7 +123,48 @@ class CTA_DataObjectExtension extends DataExtension {
 	
 	
 	
+	public function setOwner($owner, $ownerBaseClass = null) {
+		
+		parent::setOwner($owner, $ownerBaseClass);
+
+		if( $owner && $owner->ID && $owner->ClassName){
+			$ownerBaseClass = $owner->ClassName;
+		}else{
+			return;
+		}
 	
+		$staticConfig = Config::inst()->get($ownerBaseClass, 'cta_config');
+	
+		if( ! empty($staticConfig)){
+			
+			$SourceValueArray = array();
+	
+			//get all 'SourceValue'
+			foreach ($staticConfig as $array){
+				if(isset($array['SourceValue'])){
+					$SourceValueArray[] = $array['SourceValue'];
+				}
+			}
+
+			if( ! empty($SourceValueArray)){
+				foreach ($SourceValueArray as $item) {
+
+					$funcName = 'get' . $item;
+	
+					$this->owner->$funcName() = function() use($funcName){
+				
+							
+						return 	Debug::show(111);
+					};
+				}
+			}	
+				
+		}
+		
+		
+// 		$x = $this->getPackingContent();
+// 		$x();die;
+	}
 	
 	
 	public function updateCMSFields(FieldList $fields){
@@ -321,8 +362,6 @@ class CTA_DataObjectExtension extends DataExtension {
 		
 		return $OptionValue;
 	}
-	
-	
 	
 	
 }	
