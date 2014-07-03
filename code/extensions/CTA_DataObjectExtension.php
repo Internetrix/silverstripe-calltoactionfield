@@ -27,7 +27,7 @@ class CTA_DataObjectExtension extends DataExtension {
 			// source class (instance of DataObject) => config array
 			'Product' => array(
 				array(
-					'SourceValue' => 'PackingContent'		// db value of dataobject
+					'SourceValue' => 'PackingContents'		// db value of dataobject
 					, 'GlobalSource' => 'SiteConfig'		// define where to store or get global value or dataobject
 					, 'DefaultSourceOption' => 'Global'		// if this is not set, 'Global' by default
 					, 'UseOriginal' => false				// true  = if 'SourceValue' exists in 'GlobalSource' dataobject, 
@@ -89,11 +89,11 @@ class CTA_DataObjectExtension extends DataExtension {
 				$NameOfGlobalDataObject = self::$DefaultGlobalSource;
 			}
 			
-// 			$GlobalStaticConfig[$NameOfGlobalDataObject][] = ;
+			//TODO make global values to be dynamic
 			
-			if( ! $NameOfGlobalDataObject::has_extension('CTA_GlobalDataObjectExtension') ){
-				self::AddDataObjectExtension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
-			}
+// 			if( ! $NameOfGlobalDataObject::has_extension('CTA_GlobalDataObjectExtension') ){
+// 				self::AddDataObjectExtension($NameOfGlobalDataObject, 'CTA_GlobalDataObjectExtension');
+// 			}
 		}		
 		
 	}
@@ -123,48 +123,48 @@ class CTA_DataObjectExtension extends DataExtension {
 	
 	
 	
-	public function setOwner($owner, $ownerBaseClass = null) {
+// 	public function setOwner($owner, $ownerBaseClass = null) {
 		
-		parent::setOwner($owner, $ownerBaseClass);
-return;
-		if( $owner && $owner->ID && $owner->ClassName){
-			$ownerBaseClass = $owner->ClassName;
-		}else{
-			return;
-		}
-	
-		$staticConfig = Config::inst()->get($ownerBaseClass, 'extra_methods');
+// 		parent::setOwner($owner, $ownerBaseClass);
 
-		if( ! empty($staticConfig)){
+// 		if( $owner && $owner->ID && $owner->ClassName){
+// 			$ownerBaseClass = $owner->ClassName;
+// 		}else{
+// 			return;
+// 		}
+	
+// 		$staticConfig = Config::inst()->get($ownerBaseClass, 'extra_methods');
+
+// 		if( ! empty($staticConfig)){
 			
-			$SourceValueArray = array();
+// 			$SourceValueArray = array();
 	
-			//get all 'SourceValue'
-			foreach ($staticConfig as $array){
-				if(isset($array['SourceValue'])){
-					$SourceValueArray[] = $array['SourceValue'];
-				}
-			}
+// 			//get all 'SourceValue'
+// 			foreach ($staticConfig as $array){
+// 				if(isset($array['SourceValue'])){
+// 					$SourceValueArray[] = $array['SourceValue'];
+// 				}
+// 			}
 
-			if( ! empty($SourceValueArray)){
-				foreach ($SourceValueArray as $item) {
+// 			if( ! empty($SourceValueArray)){
+// 				foreach ($SourceValueArray as $item) {
 
-					$funcName = 'get' . $item;
+// 					$funcName = 'get' . $item;
 	
-// 					$this->owner->$funcName = function() use($funcName){
+// // 					$this->owner->$funcName = function() use($funcName){
 				
 							
-// 						return 	Debug::show(111);
-// 					};
-				}
-			}	
+// // 						return 	Debug::show(111);
+// // 					};
+// 				}
+// 			}	
 				
-		}
+// 		}
 		
 		
-// 		$x = $this->getPackingContent();
-// 		$x();die;
-	}
+// // 		$x = $this->getPackingContent();
+// // 		$x();die;
+// 	}
 	
 	
 	public function updateCMSFields(FieldList $fields){
@@ -363,6 +363,15 @@ return;
 		return $OptionValue;
 	}
 	
+	
+	
+	
+	
+	public function CTAvalue($name){
+		
+		
+		
+	}
 	
 }	
 	
